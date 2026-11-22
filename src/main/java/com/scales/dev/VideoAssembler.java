@@ -18,12 +18,11 @@ public class VideoAssembler {
     try {
       this.FRAME_RECORDER = FFmpegFrameRecorder.createDefault(output, width, height);
 
+      this.FRAME_RECORDER.setFrameRate(fps);
+
       // we need speed.
       this.FRAME_RECORDER.setFormat("webm");
       this.FRAME_RECORDER.setVideoCodecName("libvpx-vp9");
-
-      this.FRAME_RECORDER.setFrameRate(fps);
-
       this.FRAME_RECORDER.setVideoOption("deadline", "realtime");
       this.FRAME_RECORDER.setVideoOption("cpu-used", "8");
       this.FRAME_RECORDER.setVideoOption("row-mt", "1");

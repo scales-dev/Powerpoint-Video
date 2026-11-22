@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static void main(String[] args) {
-    double fps = 0.2;
+    double fps = 0.5;
 
     File input = new File(args[0]);
     VideoSplitter splitter = new VideoSplitter(new File(args[0]));
@@ -17,7 +17,7 @@ public class Main {
         Arrays.stream(splitter.split(fps)).collect(Collectors.toCollection(LinkedList::new));
     splitter.close();
 
-    Transition transition = new Transition(20, originalFps, Transition.Transitions.FADE_TO_BLACK);
+    Transition transition = new Transition(20, originalFps, Transitions.RANDOM);
 
     File output = input.toPath().getParent().resolve("output.webm").toFile();
     Rectangle bounds = frames.getFirst().images[0].getData().getBounds();
