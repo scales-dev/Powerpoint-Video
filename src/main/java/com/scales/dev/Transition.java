@@ -1,6 +1,7 @@
 package com.scales.dev;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -145,6 +146,33 @@ public record Transition(int transitionFrames, int fps, Transitions transition) 
         g.scale(Math.abs(Math.cos(angle)), 1);
         g.shear(0, Math.sin(angle) * 0.15);
         g.drawImage(angle > Math.PI / 2 ? to : from, -width / 2, -height / 2, null);
+
+        g.dispose();
+        return result;
+      }
+    },
+    CUBE {
+      @Override
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+        int width = from.getWidth();
+        int height = from.getHeight();
+
+        BufferedImage result = getDummyImage(from);
+        Graphics2D g = result.createGraphics();
+
+        float scale = (Math.abs(0.25f - (progress / 2)) * 2) + 0.5f;
+        g.translate((width / 2f) - ((width * scale) / 2), (height / 2f) - ((height * scale) / 2));
+        g.scale(scale, scale);
+
+        AffineTransform transform = g.getTransform();
+        float scaleX = 1 - progress;
+        g.scale(scaleX, 1);
+        g.drawImage(from, 0, 0, null);
+        g.setTransform(transform);
+
+        g.translate(from.getWidth() * scaleX, 0);
+        g.scale(progress, 1);
+        g.drawImage(to, 0, 0, null);
 
         g.dispose();
         return result;
