@@ -37,9 +37,8 @@ public class VideoSplitter {
     }
   }
 
-  // secondsPerFrame lol
-  public BufferedImage[] split(int secondsPerFrame) {
-    int increment = (int) (this.FRAME_GRABBER.getFrameRate() * secondsPerFrame);
+  public BufferedImage[] split(double fps) {
+    int increment = (int) (this.FRAME_GRABBER.getFrameRate() * (1 / fps));
     int frameCount = Math.floorDiv(this.FRAME_GRABBER.getLengthInVideoFrames(), increment);
     BufferedImage[] frames = new BufferedImage[frameCount+1];
 

@@ -36,9 +36,8 @@ public class VideoAssembler {
   public void assemble(BufferedImage[] frames) {
     try {
       for (int i = 0; i < frames.length; i++) {
-        BufferedImage bi = frames[i];
         this.FRAME_RECORDER.setFrameNumber(i);
-        this.FRAME_RECORDER.record(FRAME_CONVERTER.convert(bi));
+        this.FRAME_RECORDER.record(FRAME_CONVERTER.convert(frames[i]));
       }
     } catch (FFmpegFrameRecorder.Exception e) {
       throw new RuntimeException(e);
