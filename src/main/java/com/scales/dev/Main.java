@@ -1,23 +1,20 @@
 package com.scales.dev;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 
 public class Main {
   public static void main(String[] args) {
+    File input = new File(args[0]);
     VideoSplitter splitter = new VideoSplitter(new File(args[0]));
     BufferedImage[] frames = splitter.split(5);
-
     splitter.close();
 
-    try {
-      for(int i = 0; i < frames.length; i++) {
-        ImageIO.write(frames[i], "png", new File("/home/scale/Downloads/output/" + i + ".png"));
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    File output = input.toPath().getParent().resolve("output.mp4").toFile();
+    int width = frames[0].getWidth();
+    int height = frames[0].getHeight();
+    VideoAssembler assembler = new VideoAssembler(output, 1, width, height);
+    assembler.assemble(frames);
+    assembler.close();
   }
 }

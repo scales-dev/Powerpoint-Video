@@ -1,16 +1,12 @@
 package com.scales.dev;
 
-import org.bytedeco.javacv.FFmpegFrameGrabber;
-import org.bytedeco.javacv.FrameGrabber;
-import org.bytedeco.javacv.Java2DFrameConverter;
-
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
-import java.io.InputStream;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.FrameGrabber;
+import org.bytedeco.javacv.Java2DFrameConverter;
 
 // Source - https://stackoverflow.com/a/67492899
 // Posted by Felipe Oviedo
@@ -20,9 +16,9 @@ public class VideoSplitter {
   private final Java2DFrameConverter FRAME_CONVERTER;
 
   public VideoSplitter(File input) {
-    FRAME_GRABBER = new FFmpegFrameGrabber(input.getAbsoluteFile());
-
-    FRAME_CONVERTER = new Java2DFrameConverter();
+    System.out.println("Video splitter initialized!");
+    this.FRAME_GRABBER = new FFmpegFrameGrabber(input.getAbsoluteFile());
+    this.FRAME_CONVERTER = new Java2DFrameConverter();
 
     try{
       this.FRAME_GRABBER.start();
@@ -33,8 +29,9 @@ public class VideoSplitter {
 
   public void close() {
     try{
-      FRAME_GRABBER.close();
-      FRAME_CONVERTER.close();
+      this.FRAME_GRABBER.close();
+      this.FRAME_CONVERTER.close();
+      System.out.println("Video splitter closed :pensive:");
     } catch (FrameGrabber.Exception e) {
       throw new RuntimeException(e);
     }
@@ -42,19 +39,18 @@ public class VideoSplitter {
 
   // secondsPerFrame lol
   public BufferedImage[] split(int secondsPerFrame) {
-    int increment = (int) (FRAME_GRABBER.getFrameRate() * secondsPerFrame);
-    int frameCount = Math.floorDiv(FRAME_GRABBER.getLengthInVideoFrames(), increment);
+    int increment = (int) (this.FRAME_GRABBER.getFrameRate() * secondsPerFrame);
+    int frameCount = Math.floorDiv(this.FRAME_GRABBER.getLengthInVideoFrames(), increment);
     BufferedImage[] frames = new BufferedImage[frameCount+1];
 
     try {
       for (int i = 0; i <= frameCount; i++) {
-        System.out.println(i + ":" + frameCount);
-        FRAME_GRABBER.setFrameNumber(i*increment);
+        this.FRAME_GRABBER.setFrameNumber(i * increment);
 
+        BufferedImage bi = this.FRAME_CONVERTER.convert(this.FRAME_GRABBER.grabImage());
         // Source - https://stackoverflow.com/a/3514297
         // Posted by Klark
         // Retrieved 2026-11-22, License - CC BY-SA 2.5
-        BufferedImage bi = FRAME_CONVERTER.convert(FRAME_GRABBER.grabImage());
         ColorModel cm = bi.getColorModel();
         boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
         WritableRaster raster = bi.copyData(null);
