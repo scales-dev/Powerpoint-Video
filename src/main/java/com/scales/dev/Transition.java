@@ -101,6 +101,34 @@ public record Transition(int transitionFrames, int fps, Transitions transition) 
 
         return result;
       }
+    },
+    LEFT_TO_RIGHT {
+      @Override
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+        BufferedImage result = getDummyImage(from);
+        Graphics2D g = result.createGraphics();
+
+        g.translate(from.getWidth() * progress, 0);
+        g.drawImage(from, 0, 0, null);
+        g.drawImage(to, -from.getWidth(), 0, null);
+
+        g.dispose();
+        return result;
+      }
+    },
+    RIGHT_TO_LEFT {
+      @Override
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+        BufferedImage result = getDummyImage(from);
+        Graphics2D g = result.createGraphics();
+
+        g.translate(-from.getWidth() * progress, 0);
+        g.drawImage(from, 0, 0, null);
+        g.drawImage(to, from.getWidth(), 0, null);
+
+        g.dispose();
+        return result;
+      }
     };
 
     private static BufferedImage getDummyImage(BufferedImage from) {
