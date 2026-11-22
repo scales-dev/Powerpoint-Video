@@ -16,9 +16,21 @@ public class VideoAssembler {
     this.transition = transition;
 
     try {
-      this.FRAME_RECORDER =
-          FFmpegFrameRecorder.createDefault(output.getAbsoluteFile(), width, height);
+      this.FRAME_RECORDER = FFmpegFrameRecorder.createDefault(output, width, height);
+
+      // we need speed.
+      this.FRAME_RECORDER.setFormat("webm");
+      this.FRAME_RECORDER.setVideoCodecName("libvpx-vp9");
+
       this.FRAME_RECORDER.setFrameRate(fps);
+
+      this.FRAME_RECORDER.setVideoOption("deadline", "realtime");
+      this.FRAME_RECORDER.setVideoOption("cpu-used", "8");
+      this.FRAME_RECORDER.setVideoOption("row-mt", "1");
+      this.FRAME_RECORDER.setVideoOption("tile-columns", "2");
+      this.FRAME_RECORDER.setVideoOption(
+          "threads", String.valueOf(Runtime.getRuntime().availableProcessors()));
+
       this.FRAME_RECORDER.start();
     } catch (FFmpegFrameRecorder.Exception e) {
       throw new RuntimeException(e);
@@ -37,8 +49,6 @@ public class VideoAssembler {
 
   public void assemble(LinkedList<Clip> clips) {
     try {
-      int frame = 0;
-
       Clip current;
       while ((current = clips.poll()) != null) {
         Clip next = clips.peek();
@@ -49,11 +59,17 @@ public class VideoAssembler {
 
         double imageIndex = 0;
         double imageIncrement = (double) transitionedClip.images.length / transitionedClip.frames;
+        int prevIndex = -1;
+        Frame frame = null;
+
         while (imageIndex < transitionedClip.images.length) {
           int i = (int) Math.floor(imageIndex);
+          if (prevIndex != i) {
+            frame = FRAME_CONVERTER.convert(transitionedClip.images[i]);
+            prevIndex = i;
+          }
 
-          this.FRAME_RECORDER.setFrameNumber(frame++);
-          this.FRAME_RECORDER.record(FRAME_CONVERTER.convert(transitionedClip.images[i]));
+          this.FRAME_RECORDER.record(frame);
           imageIndex += imageIncrement;
         }
       }
