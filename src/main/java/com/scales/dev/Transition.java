@@ -129,6 +129,26 @@ public record Transition(int transitionFrames, int fps, Transitions transition) 
         g.dispose();
         return result;
       }
+    },
+    FLIP {
+      @Override
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+        int width = from.getWidth();
+        int height = from.getHeight();
+
+        BufferedImage result = getDummyImage(from);
+        Graphics2D g = result.createGraphics();
+
+        double angle = progress * Math.PI;
+
+        g.translate(width / 2.0, height / 2.0);
+        g.scale(Math.abs(Math.cos(angle)), 1);
+        g.shear(0, Math.sin(angle) * 0.15);
+        g.drawImage(angle > Math.PI / 2 ? to : from, -width / 2, -height / 2, null);
+
+        g.dispose();
+        return result;
+      }
     };
 
     private static BufferedImage getDummyImage(BufferedImage from) {
