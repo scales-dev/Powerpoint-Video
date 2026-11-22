@@ -59,6 +59,22 @@ public record Transition(int transitionFrames, int fps, Transitions transition) 
         return result;
       }
     },
+    FADE_TO_BLACK {
+      @Override
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+        BufferedImage result = getDummyImage(from);
+        Graphics2D g = result.createGraphics();
+
+        g.setComposite(AlphaComposite.SrcOver.derive(Math.max(0, 1 - (progress * 3))));
+        g.drawImage(from, 0, 0, null);
+
+        g.setComposite(AlphaComposite.SrcOver.derive(Math.max(0, -2 + (progress * 3))));
+        g.drawImage(to, 0, 0, null);
+
+        g.dispose();
+        return result;
+      }
+    },
     DISSOLVE {
       @Override
       public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
