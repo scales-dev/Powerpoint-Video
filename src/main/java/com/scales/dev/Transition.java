@@ -2,6 +2,8 @@ package com.scales.dev;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Random;
+import java.util.stream.IntStream;
 
 public record Transition(int transitionFrames, int fps, Transitions transition) {
   public Clip transition(Clip current, Clip next) {
@@ -27,7 +29,7 @@ public record Transition(int transitionFrames, int fps, Transitions transition) 
       int transitionFrame = i - transitionIndex;
       float transitionProgress = (float) transitionFrame / transitionFrames;
 
-      output[i] = transition.handle(imageAtFrame, nextImage, transitionProgress);
+      output[i] = transition.handle(imageAtFrame, nextImage, transitionProgress, current);
     }
 
     return new Clip(output, fps);
@@ -36,17 +38,14 @@ public record Transition(int transitionFrames, int fps, Transitions transition) 
   public enum Transitions {
     NONE {
       @Override
-      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress) {
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
         return from;
       }
     },
     FADE {
       @Override
-      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress) {
-        int w = from.getWidth();
-        int h = from.getHeight();
-
-        BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR);
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+        BufferedImage result = getDummyImage(from);
         Graphics2D g = result.createGraphics();
 
         g.setComposite(AlphaComposite.Src);
@@ -58,8 +57,57 @@ public record Transition(int transitionFrames, int fps, Transitions transition) 
         g.dispose();
         return result;
       }
+    },
+    DISSOLVE {
+      @Override
+      public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+        BufferedImage result = getDummyImage(from);
+        Graphics2D g = result.createGraphics();
+
+        int squareSize = from.getWidth() / 20;
+        int maxHoles = (from.getWidth() * from.getHeight()) / (squareSize * squareSize);
+        int holes = (int) (progress * maxHoles);
+
+        g.drawImage(from, 0, 0, null);
+
+        int columns = (from.getWidth() + squareSize - 1) / squareSize;
+        int rows = (from.getHeight() + squareSize - 1) / squareSize;
+
+        int totalSquares = columns * rows;
+
+        // gives an array from 0 to totalSquares
+        int[] order = IntStream.range(0, totalSquares).toArray();
+
+        // ensures we get the same random pattern between frames
+        Random random = new Random(clip.hashCode());
+        for (int i = order.length - 1; i > 0; i--) {
+          // swaps numbers around randomly!
+          int j = random.nextInt(i + 1);
+          int temp = order[i];
+          order[i] = order[j];
+          order[j] = temp;
+        }
+
+        for (int i = 0; i < holes; i++) {
+          int index = order[i];
+
+          int x = (index % columns) * squareSize;
+          int y = (index / columns) * squareSize;
+
+          g.drawImage(
+              to, x, y, x + squareSize, y + squareSize, x, y, x + squareSize, y + squareSize, null);
+        }
+        g.dispose();
+
+        return result;
+      }
     };
 
-    public abstract BufferedImage handle(BufferedImage from, BufferedImage to, float progress);
+    private static BufferedImage getDummyImage(BufferedImage from) {
+      return new BufferedImage(from.getWidth(), from.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+    }
+
+    public abstract BufferedImage handle(
+        BufferedImage from, BufferedImage to, float progress, Clip clip);
   }
 }
