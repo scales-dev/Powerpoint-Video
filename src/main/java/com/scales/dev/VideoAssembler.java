@@ -1,17 +1,19 @@
 package com.scales.dev;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.LinkedList;
 import org.bytedeco.javacv.*;
 
 // evil VideoSplitter be like:
 public class VideoAssembler {
   private final FFmpegFrameRecorder FRAME_RECORDER;
   private final Java2DFrameConverter FRAME_CONVERTER;
+  private final Transition transition;
 
-  public VideoAssembler(File output, double fps, int width, int height) {
+  public VideoAssembler(File output, double fps, int width, int height, Transition transition) {
     System.out.println("Video assembler joins the battle");
     this.FRAME_CONVERTER = new Java2DFrameConverter();
+    this.transition = transition;
 
     try {
       this.FRAME_RECORDER =
@@ -33,11 +35,27 @@ public class VideoAssembler {
     }
   }
 
-  public void assemble(BufferedImage[] frames) {
+  public void assemble(LinkedList<Clip> clips) {
     try {
-      for (int i = 0; i < frames.length; i++) {
-        this.FRAME_RECORDER.setFrameNumber(i);
-        this.FRAME_RECORDER.record(FRAME_CONVERTER.convert(frames[i]));
+      int frame = 0;
+
+      Clip current;
+      while ((current = clips.poll()) != null) {
+        Clip next = clips.peek();
+
+        Clip transitionedClip = this.transition.transition(current, next);
+
+        System.out.println(clips.size() + " clips remaining!!");
+
+        double imageIndex = 0;
+        double imageIncrement = (double) transitionedClip.images.length / transitionedClip.frames;
+        while (imageIndex < transitionedClip.images.length) {
+          int i = (int) Math.floor(imageIndex);
+
+          this.FRAME_RECORDER.setFrameNumber(frame++);
+          this.FRAME_RECORDER.record(FRAME_CONVERTER.convert(transitionedClip.images[i]));
+          imageIndex += imageIncrement;
+        }
       }
     } catch (FFmpegFrameRecorder.Exception e) {
       throw new RuntimeException(e);

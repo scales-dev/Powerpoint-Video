@@ -16,15 +16,19 @@ public class VideoSplitter {
   private final Java2DFrameConverter FRAME_CONVERTER;
 
   public VideoSplitter(File input) {
-    System.out.println("Video splitter initialized!");
-    this.FRAME_GRABBER = new FFmpegFrameGrabber(input.getAbsoluteFile());
+    System.out.println("Video splitter initialising!");
     this.FRAME_CONVERTER = new Java2DFrameConverter();
 
     try{
+      this.FRAME_GRABBER = FFmpegFrameGrabber.createDefault(input.getAbsoluteFile());
       this.FRAME_GRABBER.start();
     } catch (FFmpegFrameGrabber.Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public int getFPS() {
+    return (int) this.FRAME_GRABBER.getFrameRate();
   }
 
   public void close() {
@@ -37,10 +41,10 @@ public class VideoSplitter {
     }
   }
 
-  public BufferedImage[] split(double fps) {
+  public Clip[] split(double fps) {
     int increment = (int) (this.FRAME_GRABBER.getFrameRate() * (1 / fps));
     int frameCount = Math.floorDiv(this.FRAME_GRABBER.getLengthInVideoFrames(), increment);
-    BufferedImage[] frames = new BufferedImage[frameCount+1];
+    Clip[] frames = new Clip[frameCount + 1];
 
     try {
       for (int i = 0; i <= frameCount; i++) {
@@ -55,7 +59,7 @@ public class VideoSplitter {
         WritableRaster raster = bi.copyData(null);
         BufferedImage clone = new BufferedImage(cm, raster, isAlphaPremultiplied, null);
 
-        frames[i] = clone;
+        frames[i] = new Clip(new BufferedImage[] {clone}, 1);
       }
 
       return frames;

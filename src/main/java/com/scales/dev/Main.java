@@ -1,21 +1,29 @@
 package com.scales.dev;
 
-import java.awt.image.BufferedImage;
+import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 public class Main {
-  private static final double FPS = 1;
-
   public static void main(String[] args) {
+    double splitFps = 0.2;
+
     File input = new File(args[0]);
     VideoSplitter splitter = new VideoSplitter(new File(args[0]));
-    BufferedImage[] frames = splitter.split(FPS);
+    int originalFps = splitter.getFPS();
+    LinkedList<Clip> frames =
+        Arrays.stream(splitter.split(splitFps)).collect(Collectors.toCollection(LinkedList::new));
     splitter.close();
 
-    File output = input.toPath().getParent().resolve("output.mp4").toFile();
-    int width = frames[0].getWidth();
-    int height = frames[0].getHeight();
-    VideoAssembler assembler = new VideoAssembler(output, FPS, width, height);
+    int outputFps = (int) (originalFps / splitFps);
+    Transition transition = new Transition(10, outputFps, Transition.Transitions.FADE);
+
+    File output = input.toPath().getParent().resolve("output.webm").toFile();
+    Rectangle bounds = frames.getFirst().images[0].getData().getBounds();
+    VideoAssembler assembler =
+        new VideoAssembler(output, outputFps, bounds.width, bounds.height, transition);
     assembler.assemble(frames);
     assembler.close();
   }
