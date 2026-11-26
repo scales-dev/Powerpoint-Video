@@ -17,7 +17,7 @@ public class Main {
         Arrays.stream(splitter.split(fps)).collect(Collectors.toCollection(LinkedList::new));
     splitter.close();
 
-    Transition transition = new Transition(20, originalFps, Transitions.RANDOM);
+    Transition transition = new Transition(20, originalFps, Transitions.FLIP);
 
     File output = input.toPath().getParent().resolve("output.webm").toFile();
     Rectangle bounds = frames.getFirst().images[0].getData().getBounds();

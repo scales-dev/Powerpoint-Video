@@ -21,14 +21,10 @@ public class VideoAssembler {
       this.FRAME_RECORDER.setFrameRate(fps);
 
       // we need speed.
-      this.FRAME_RECORDER.setFormat("webm");
       this.FRAME_RECORDER.setVideoCodecName("libvpx-vp9");
       this.FRAME_RECORDER.setVideoOption("deadline", "realtime");
-      this.FRAME_RECORDER.setVideoOption("cpu-used", "8");
-      this.FRAME_RECORDER.setVideoOption("row-mt", "1");
-      this.FRAME_RECORDER.setVideoOption("tile-columns", "2");
-      this.FRAME_RECORDER.setVideoOption(
-          "threads", String.valueOf(Runtime.getRuntime().availableProcessors()));
+      // can be any number from -8 to 8, but 8 causes gross flickers for me, idk why
+      this.FRAME_RECORDER.setVideoOption("cpu-used", "6");
 
       this.FRAME_RECORDER.start();
     } catch (FFmpegFrameRecorder.Exception e) {

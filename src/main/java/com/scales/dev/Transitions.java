@@ -129,7 +129,7 @@ public enum Transitions {
       double angle = progress * Math.PI;
 
       g.translate(width / 2.0, height / 2.0);
-      g.scale(Math.abs(Math.cos(angle)), 1);
+      g.scale(Math.max(0.05, Math.abs(Math.cos(angle))), 1);
       g.shear(0, Math.sin(angle) * 0.15);
       g.drawImage(angle > Math.PI / 2 ? to : from, -width / 2, -height / 2, null);
 
@@ -146,7 +146,12 @@ public enum Transitions {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
-      float scale = (Math.abs(0.25f - (progress / 2)) * 2) + 0.5f;
+      // when stealing code for the flip animation
+      // i found out Math.cos([0-1] * Math.PI) outputs 1 for 0 and -1 for 1
+      // this is obvious, but i just never thought of it before
+      double n = Math.abs(1 - (progress * 2));
+      double scale = n + ((1 - n) * 0.5);
+
       g.translate((width / 2f) - ((width * scale) / 2), (height / 2f) - ((height * scale) / 2));
       g.scale(scale, scale);
 
