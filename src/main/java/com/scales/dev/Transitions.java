@@ -9,13 +9,13 @@ import java.util.stream.IntStream;
 public enum Transitions {
   NONE {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       return from;
     }
   },
   FADE {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
@@ -31,7 +31,7 @@ public enum Transitions {
   },
   FADE_TO_BLACK {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
@@ -47,7 +47,7 @@ public enum Transitions {
   },
   DISSOLVE {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
@@ -66,7 +66,7 @@ public enum Transitions {
       int[] order = IntStream.range(0, totalSquares).toArray();
 
       // ensures we get the same random pattern between frames
-      Random random = new Random(clip.hashCode());
+      Random random = new Random(hash);
       for (int i = order.length - 1; i > 0; i--) {
         // swaps numbers around randomly!
         int j = random.nextInt(i + 1);
@@ -91,7 +91,7 @@ public enum Transitions {
   },
   LEFT_TO_RIGHT {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
@@ -105,7 +105,7 @@ public enum Transitions {
   },
   RIGHT_TO_LEFT {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
@@ -119,7 +119,7 @@ public enum Transitions {
   },
   FLIP {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
       int width = from.getWidth();
       int height = from.getHeight();
 
@@ -139,15 +139,15 @@ public enum Transitions {
   },
   CUBE {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
       int width = from.getWidth();
       int height = from.getHeight();
 
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
-      // when stealing code for the flip animation
-      // i found out Math.cos([0-1] * Math.PI) outputs 1 for 0 and -1 for 1
+      // when stealing code for the flip animation i found out
+      // Math.cos([0-1] * Math.PI) outputs 1 for 0, 0 for 0.5 and -1 for 1
       // this is obvious, but i just never thought of it before
       double n = Math.abs(1 - (progress * 2));
       double scale = n + ((1 - n) * 0.5);
@@ -168,19 +168,11 @@ public enum Transitions {
       g.dispose();
       return result;
     }
-  },
-  RANDOM {
-    @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, Clip clip) {
-      int transitionIndex = (int) (new Random(clip.hashCode()).nextFloat() * (values().length - 1));
-      return values()[transitionIndex].handle(from, to, progress, clip);
-    }
   };
 
   private static BufferedImage getDummyImage(BufferedImage from) {
     return new BufferedImage(from.getWidth(), from.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
   }
 
-  public abstract BufferedImage handle(
-      BufferedImage from, BufferedImage to, float progress, Clip clip);
+  public abstract BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i);
 }

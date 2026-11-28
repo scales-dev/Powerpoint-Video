@@ -8,13 +8,9 @@ import org.bytedeco.javacv.*;
 public class VideoAssembler {
   private final FFmpegFrameRecorder FRAME_RECORDER;
   private final Java2DFrameConverter FRAME_CONVERTER;
-  private final Transition transition;
-
-  private Clip lastClip;
 
   public VideoAssembler(File output, double fps, int width, int height) {
     this.FRAME_CONVERTER = new Java2DFrameConverter();
-    this.transition = new Transition(20, 60, Transitions.FLIP);
 
     try {
       this.FRAME_RECORDER = FFmpegFrameRecorder.createDefault(output, width, height);
@@ -42,38 +38,15 @@ public class VideoAssembler {
     }
   }
 
-  public void append(Clip clip) throws FFmpegFrameRecorder.Exception {
-    if (lastClip == null) {
-      lastClip = clip;
-      return;
-    }
-
-    Clip transitionedClip = this.transition.transition(lastClip, clip);
-
-    double imageIndex = 0;
-    double imageIncrement = (double) transitionedClip.images.length / transitionedClip.frames;
-    int prevIndex = -1;
-    Frame frame = null;
-
-    while (imageIndex < transitionedClip.images.length) {
-      int i = (int) Math.floor(imageIndex);
-      if (prevIndex != i) {
-        frame = FRAME_CONVERTER.convert(transitionedClip.images[i]);
-        prevIndex = i;
-      }
-
-      this.FRAME_RECORDER.record(frame);
-      imageIndex += imageIncrement;
-    }
-
-    lastClip = clip;
+  public void append(BufferedImage bufferedImage) throws FFmpegFrameRecorder.Exception {
+    this.append(this.getFrame(bufferedImage));
   }
 
-  public void append(BufferedImage bufferedImage, int frames) throws FFmpegFrameRecorder.Exception {
-    Frame frame = FRAME_CONVERTER.convert(bufferedImage);
+  public void append(Frame frame) throws FFmpegFrameRecorder.Exception {
+    this.FRAME_RECORDER.record(frame);
+  }
 
-    for (int i = 0; i < frames; i++) {
-      this.FRAME_RECORDER.record(frame);
-    }
+  public Frame getFrame(BufferedImage bufferedImage) {
+    return FRAME_CONVERTER.convert(bufferedImage);
   }
 }
