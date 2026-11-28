@@ -18,24 +18,20 @@ public class Main {
     File input = new File(args[0]);
     File output = input.toPath().getParent().resolve("output.webm").toFile();
 
-    VideoSplitter splitterA = new VideoSplitter(input, SPLIT_FPS);
-    // this second splitter is ahead of the game! (THE GAME!!!!!)
-    VideoSplitter splitterB = new VideoSplitter(input, SPLIT_FPS);
-    splitterB.skip();
+    VideoSplitter splitter = new VideoSplitter(input, SPLIT_FPS);
 
-    Rectangle bounds = splitterA.getBounds();
+    Rectangle bounds = splitter.getBounds();
 
     VideoAssembler assembler = new VideoAssembler(output, OUTPUT_FPS, bounds.width, bounds.height);
 
     int frames = 0;
 
-    BufferedImage currentFrame = null;
+    BufferedImage currentFrame = splitter.getFrame(true);
     BufferedImage nextFrame;
-    while ((nextFrame = splitterB.getFrame(false)) != null) {
-      Transition transition = new Transition(TRANSITION_THRESHOLD, Transitions.CUBE);
-      currentFrame = splitterA.getFrame(false);
+    while ((nextFrame = splitter.getFrame(true)) != null) {
+      Transition transition = new Transition(TRANSITION_THRESHOLD, Transitions.random());
 
-      int remaining = (int) (INTERPOLATION_FRAMES * splitterA.currentFrame);
+      int remaining = (int) (INTERPOLATION_FRAMES * splitter.currentFrame);
 
       while (frames++ < remaining) {
         int framesLeft = remaining - frames;
@@ -43,14 +39,11 @@ public class Main {
 
         assembler.append(transition.handle(currentFrame, nextFrame, progress));
       }
+
+      currentFrame = nextFrame;
     }
 
-    // current frame will only be null if the video is shorter than the splitter's fps
-    assert currentFrame != null;
-    assembler.append(currentFrame);
-
-    splitterA.close();
-    splitterB.close();
+    splitter.close();
     assembler.close();
   }
 }

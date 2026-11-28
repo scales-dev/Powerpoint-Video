@@ -150,7 +150,7 @@ public enum Transitions {
       // Math.cos([0-1] * Math.PI) outputs 1 for 0, 0 for 0.5 and -1 for 1
       // this is obvious, but i just never thought of it before
       double n = Math.abs(1 - (progress * 2));
-      double scale = n + ((1 - n) * 0.5);
+      double scale = Math.max(0.8, n + ((1 - n) * 0.5));
 
       g.translate((width / 2f) - ((width * scale) / 2), (height / 2f) - ((height * scale) / 2));
       g.scale(scale, scale);
@@ -176,4 +176,8 @@ public enum Transitions {
 
   public abstract BufferedImage handle(
       BufferedImage from, BufferedImage to, float progress, int hash);
+
+  public static Transitions random() {
+    return Transitions.values()[new Random().nextInt(Transitions.values().length)];
+  }
 }
