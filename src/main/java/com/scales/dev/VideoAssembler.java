@@ -1,7 +1,7 @@
 package com.scales.dev;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.LinkedList;
 import org.bytedeco.javacv.*;
 
 // evil VideoSplitter be like:
@@ -10,10 +10,11 @@ public class VideoAssembler {
   private final Java2DFrameConverter FRAME_CONVERTER;
   private final Transition transition;
 
-  public VideoAssembler(File output, double fps, int width, int height, Transition transition) {
-    System.out.println("Video assembler joins the battle");
+  private Clip lastClip;
+
+  public VideoAssembler(File output, double fps, int width, int height) {
     this.FRAME_CONVERTER = new Java2DFrameConverter();
-    this.transition = transition;
+    this.transition = new Transition(20, 60, Transitions.FLIP);
 
     try {
       this.FRAME_RECORDER = FFmpegFrameRecorder.createDefault(output, width, height);
@@ -36,40 +37,43 @@ public class VideoAssembler {
     try {
       this.FRAME_RECORDER.flush();
       this.FRAME_RECORDER.close();
-      System.out.println("Video assembler dies immediately after the war ended");
     } catch (FrameRecorder.Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  public void assemble(LinkedList<Clip> clips) {
-    try {
-      Clip current;
-      while ((current = clips.poll()) != null) {
-        Clip next = clips.peek();
+  public void append(Clip clip) throws FFmpegFrameRecorder.Exception {
+    if (lastClip == null) {
+      lastClip = clip;
+      return;
+    }
 
-        Clip transitionedClip = this.transition.transition(current, next);
+    Clip transitionedClip = this.transition.transition(lastClip, clip);
 
-        System.out.println(clips.size() + " clips remaining!!");
+    double imageIndex = 0;
+    double imageIncrement = (double) transitionedClip.images.length / transitionedClip.frames;
+    int prevIndex = -1;
+    Frame frame = null;
 
-        double imageIndex = 0;
-        double imageIncrement = (double) transitionedClip.images.length / transitionedClip.frames;
-        int prevIndex = -1;
-        Frame frame = null;
-
-        while (imageIndex < transitionedClip.images.length) {
-          int i = (int) Math.floor(imageIndex);
-          if (prevIndex != i) {
-            frame = FRAME_CONVERTER.convert(transitionedClip.images[i]);
-            prevIndex = i;
-          }
-
-          this.FRAME_RECORDER.record(frame);
-          imageIndex += imageIncrement;
-        }
+    while (imageIndex < transitionedClip.images.length) {
+      int i = (int) Math.floor(imageIndex);
+      if (prevIndex != i) {
+        frame = FRAME_CONVERTER.convert(transitionedClip.images[i]);
+        prevIndex = i;
       }
-    } catch (FFmpegFrameRecorder.Exception e) {
-      throw new RuntimeException(e);
+
+      this.FRAME_RECORDER.record(frame);
+      imageIndex += imageIncrement;
+    }
+
+    lastClip = clip;
+  }
+
+  public void append(BufferedImage bufferedImage, int frames) throws FFmpegFrameRecorder.Exception {
+    Frame frame = FRAME_CONVERTER.convert(bufferedImage);
+
+    for (int i = 0; i < frames; i++) {
+      this.FRAME_RECORDER.record(frame);
     }
   }
 }

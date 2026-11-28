@@ -1,9 +1,10 @@
 package com.scales.dev;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import java.awt.image.WritableRaster;
 import java.io.File;
+import java.util.function.Function;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.FrameGrabber;
 import org.bytedeco.javacv.Java2DFrameConverter;
@@ -16,7 +17,6 @@ public class VideoSplitter {
   private final Java2DFrameConverter FRAME_CONVERTER;
 
   public VideoSplitter(File input) {
-    System.out.println("Video splitter initialising!");
     this.FRAME_CONVERTER = new Java2DFrameConverter();
 
     try{
@@ -27,44 +27,45 @@ public class VideoSplitter {
     }
   }
 
-  public int getFPS() {
-    return (int) this.FRAME_GRABBER.getFrameRate();
-  }
-
   public void close() {
     try{
       this.FRAME_GRABBER.close();
       this.FRAME_CONVERTER.close();
-      System.out.println("Video splitter closed :pensive:");
     } catch (FrameGrabber.Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  public Clip[] split(double fps) {
+  public void getFrames(double fps, Function<BufferedImage, Boolean> frame) {
     int increment = (int) (this.FRAME_GRABBER.getFrameRate() * (1 / fps));
     int frameCount = Math.floorDiv(this.FRAME_GRABBER.getLengthInVideoFrames(), increment);
-    Clip[] frames = new Clip[frameCount + 1];
 
     try {
       for (int i = 0; i <= frameCount; i++) {
-        this.FRAME_GRABBER.setFrameNumber(i * increment);
-
-        BufferedImage bi = this.FRAME_CONVERTER.convert(this.FRAME_GRABBER.grabImage());
-        // Source - https://stackoverflow.com/a/3514297
-        // Posted by Klark
-        // Retrieved 2026-11-22, License - CC BY-SA 2.5
-        ColorModel cm = bi.getColorModel();
-        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
-        WritableRaster raster = bi.copyData(null);
-        BufferedImage clone = new BufferedImage(cm, raster, isAlphaPremultiplied, null);
-
-        frames[i] = new Clip(new BufferedImage[] {clone}, 1);
+        BufferedImage bi = this.getFrame(i * increment, false);
+        if (frame.apply(bi)) return;
       }
-
-      return frames;
     } catch (FFmpegFrameGrabber.Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public BufferedImage getFrame(int frame, boolean duplicate) throws FFmpegFrameGrabber.Exception {
+    this.FRAME_GRABBER.setFrameNumber(frame);
+
+    BufferedImage bi = this.FRAME_CONVERTER.convert(this.FRAME_GRABBER.grabImage());
+
+    if (!duplicate) return bi;
+
+    // Source - https://stackoverflow.com/a/3514297
+    // Posted by Klark
+    // Retrieved 2026-11-22, License - CC BY-SA 2.5
+    ColorModel cm = bi.getColorModel();
+    return new BufferedImage(cm, bi.copyData(null), cm.isAlphaPremultiplied(), null);
+  }
+
+  public Rectangle getBounds() {
+    return new Rectangle(
+        0, 0, this.FRAME_GRABBER.getImageWidth(), this.FRAME_GRABBER.getImageHeight());
   }
 }
