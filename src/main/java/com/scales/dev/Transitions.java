@@ -91,7 +91,7 @@ public enum Transitions {
   },
   LEFT_TO_RIGHT {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
@@ -105,7 +105,7 @@ public enum Transitions {
   },
   RIGHT_TO_LEFT {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       BufferedImage result = getDummyImage(from);
       Graphics2D g = result.createGraphics();
 
@@ -119,7 +119,7 @@ public enum Transitions {
   },
   FLIP {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       int width = from.getWidth();
       int height = from.getHeight();
 
@@ -139,7 +139,7 @@ public enum Transitions {
   },
   CUBE {
     @Override
-    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i) {
+    public BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int hash) {
       int width = from.getWidth();
       int height = from.getHeight();
 
@@ -174,5 +174,6 @@ public enum Transitions {
     return new BufferedImage(from.getWidth(), from.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
   }
 
-  public abstract BufferedImage handle(BufferedImage from, BufferedImage to, float progress, int i);
+  public abstract BufferedImage handle(
+      BufferedImage from, BufferedImage to, float progress, int hash);
 }

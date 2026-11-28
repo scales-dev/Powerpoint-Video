@@ -9,7 +9,6 @@ import org.bytedeco.javacv.FFmpegFrameRecorder;
 public class Main {
   private static final float SPLIT_FPS = 0.5f;
   private static final float OUTPUT_FPS = 60;
-  // number between 0-1 for minimum progress before starting transition to next frame
   private static final float TRANSITION_THRESHOLD = 0.5f;
 
   private static final float INTERPOLATION_FRAMES = OUTPUT_FPS / SPLIT_FPS;
@@ -33,6 +32,7 @@ public class Main {
     BufferedImage currentFrame = null;
     BufferedImage nextFrame;
     while ((nextFrame = splitterB.getFrame(false)) != null) {
+      Transition transition = new Transition(TRANSITION_THRESHOLD, Transitions.CUBE);
       currentFrame = splitterA.getFrame(false);
 
       int remaining = (int) (INTERPOLATION_FRAMES * splitterA.currentFrame);
@@ -40,15 +40,8 @@ public class Main {
       while (frames++ < remaining) {
         int framesLeft = remaining - frames;
         float progress = 1 - (framesLeft / OUTPUT_FPS);
-        if (progress < TRANSITION_THRESHOLD) {
-          assembler.append(currentFrame);
-          continue;
-        }
 
-        progress = (progress - TRANSITION_THRESHOLD) / (1 - TRANSITION_THRESHOLD);
-
-        assembler.append(
-            Transitions.FADE.handle(currentFrame, nextFrame, progress, currentFrame.hashCode()));
+        assembler.append(transition.handle(currentFrame, nextFrame, progress));
       }
     }
 
