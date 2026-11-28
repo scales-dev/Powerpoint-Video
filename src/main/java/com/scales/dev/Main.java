@@ -9,7 +9,7 @@ import org.bytedeco.javacv.FFmpegFrameRecorder;
 public class Main {
   public static void main(String[] args)
       throws FFmpegFrameGrabber.Exception, FFmpegFrameRecorder.Exception {
-    float splitFps = 0.5f;
+    float splitFps = 1;
     float outputFps = 60;
 
     File input = new File(args[0]);
@@ -31,14 +31,14 @@ public class Main {
     while ((nextFrame = splitterB.getFrame(false)) != null) {
       currentFrame = splitterA.getFrame(false);
 
-      int remaining = (int) (outputFps * splitterA.currentFrame);
+      int remaining = (int) ((outputFps * splitterA.currentFrame) / splitFps);
 
       while (frames++ < remaining) {
         int framesLeft = remaining - frames;
-        float progress = framesLeft / outputFps;
+        float progress = 1 - (framesLeft / outputFps);
 
         BufferedImage transitionFrame =
-            Transitions.LEFT_TO_RIGHT.handle(currentFrame, nextFrame, progress, 0);
+            Transitions.FADE.handle(currentFrame, nextFrame, progress, 0);
         assembler.append(transitionFrame);
       }
     }
