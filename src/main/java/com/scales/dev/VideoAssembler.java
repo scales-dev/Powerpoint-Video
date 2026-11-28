@@ -7,11 +7,9 @@ import org.bytedeco.javacv.*;
 // evil VideoSplitter be like:
 public class VideoAssembler {
   private final FFmpegFrameRecorder FRAME_RECORDER;
-  private final Java2DFrameConverter FRAME_CONVERTER;
+  private static final Java2DFrameConverter FRAME_CONVERTER = new Java2DFrameConverter();
 
   public VideoAssembler(File output, double fps, int width, int height) {
-    this.FRAME_CONVERTER = new Java2DFrameConverter();
-
     try {
       this.FRAME_RECORDER = FFmpegFrameRecorder.createDefault(output, width, height);
 
@@ -38,15 +36,15 @@ public class VideoAssembler {
     }
   }
 
-  public void append(BufferedImage bufferedImage) throws FFmpegFrameRecorder.Exception {
-    this.append(this.getFrame(bufferedImage));
+  public static Frame getFrame(BufferedImage bufferedImage) {
+    return FRAME_CONVERTER.convert(bufferedImage);
   }
 
   public void append(Frame frame) throws FFmpegFrameRecorder.Exception {
     this.FRAME_RECORDER.record(frame);
   }
 
-  public Frame getFrame(BufferedImage bufferedImage) {
-    return FRAME_CONVERTER.convert(bufferedImage);
+  public void append(BufferedImage bufferedImage) throws FFmpegFrameRecorder.Exception {
+    this.append(getFrame(bufferedImage));
   }
 }

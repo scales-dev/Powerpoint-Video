@@ -27,17 +27,18 @@ public class Main {
     int frames = 0;
 
     BufferedImage currentFrame = splitter.getFrame(true);
-    BufferedImage nextFrame;
-    while ((nextFrame = splitter.getFrame(true)) != null) {
-      Transition transition = new Transition(TRANSITION_THRESHOLD, Transitions.random());
-
+    while (currentFrame != null) {
       int remaining = (int) (INTERPOLATION_FRAMES * splitter.currentFrame);
+
+      BufferedImage nextFrame = splitter.getFrame(true);
+      Transition transition =
+          new Transition(TRANSITION_THRESHOLD, Transitions.random(), currentFrame, nextFrame);
 
       while (frames++ < remaining) {
         int framesLeft = remaining - frames;
         float progress = 1 - (framesLeft / OUTPUT_FPS);
 
-        assembler.append(transition.handle(currentFrame, nextFrame, progress));
+        assembler.append(transition.handle(progress));
       }
 
       currentFrame = nextFrame;
